@@ -1,0 +1,9 @@
+# 忽略Java编译器生成的二进制文件
+target
+*.class
+*.jar
+
+# 忽略开发工具所生成的临时工程文件
+# IDEA
+.idea
+*.iml
