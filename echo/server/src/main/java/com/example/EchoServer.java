@@ -1,20 +1,15 @@
 package com.example;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.charset.Charset;
 
 public class EchoServer implements Runnable {
@@ -55,16 +50,37 @@ public class EchoServer implements Runnable {
             }
         };
         b.childHandler(channelInitializer);
+
+        ChannelFutureListener tcpPortBindEventListener = new ChannelFutureListener() {
+            // 服务器端口号
+            private final String portStr = String.valueOf(port);
+
+            @Override
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                if (!channelFuture.isSuccess()) {
+                    Throwable cause = channelFuture.cause();
+                    logger.debug("服务器端口绑定失败(端口号portStr=" + portStr + "), 错误原因: " + cause.getMessage());
+                    return;
+                }
+                logger.info("服务器端口" + portStr + "绑定成功");
+            }
+        };
+        ChannelFuture channelFuture = b.bind();
+        channelFuture.addListener(tcpPortBindEventListener);
         try {
-            ChannelFuture channelFutureAfterTcpPortBind = b.bind().sync();
-            channelFutureAfterTcpPortBind.channel().closeFuture().sync();
+            channelFuture.sync();
+            Channel channel = channelFuture.channel();
+            channel.closeFuture().sync();
         } catch (InterruptedException ignored) {
             //ignored.printStackTrace();
-        } catch (Exception bindException) {
-            //bindException.printStackTrace();
-            String reason = bindException.getMessage();
-            logger.error("错误! 端口" + port + "已被其他进程占用: " + reason);
-            throw new RuntimeException("无法绑定本机" + port + "端口: " + reason);
+        } catch (Exception e) {
+            String reason = e.getMessage();
+            logger.error("无法绑定TCP端口! 端口号" + port + "被占用: " + reason);
+            //noinspection ConstantConditions
+            if (!(e instanceof BindException)) {
+                logger.debug("程序调试信息: " + e.getClass().getName());
+                e.printStackTrace();
+            }
         } finally {
             try {
                 group.shutdownGracefully().sync();

@@ -29,11 +29,7 @@ public class RunEchoServer {
         int nPort = Integer.parseInt(strPort);
         EchoServer echoServer = new EchoServer(nPort, charset);
         logger.debug("当前汉字使用" + echoServer.getCharset().displayName() + "字符集");
-        try {
-            echoServer.run();
-        } catch (Exception e) {
-            logger.error("错误" + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-            //e.printStackTrace();
-        }
+
+        echoServer.run();
     }
 }
