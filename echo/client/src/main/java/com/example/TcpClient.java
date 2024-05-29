@@ -71,7 +71,6 @@ public class TcpClient implements Runnable {
         } catch (InterruptedException ignored) {
             //ignored.printStackTrace();
         } catch (Exception e) {
-            //bindException.printStackTrace();
             String exceptionName = e.getClass().getSimpleName();
             String message = e.getMessage();
             if (null == message) {
